@@ -3,7 +3,7 @@ import numpy as np
 import os
 import glob
 import cv2
-from libtiff import TIFF
+# from libtiff import TIFF
 
 class myAugmentation(object):
 	
@@ -132,7 +132,7 @@ class myAugmentation(object):
 			cv2.imwrite(path_label+midname+"."+self.img_type,img_label)
 
 class dataProcess(object):
-	def __init__(self, out_rows, out_cols, data_path = "../deform/train", label_path = "../deform/label", test_path = "../test", npy_path = "../npydata", img_type = "tif"):
+	def __init__(self, out_rows, out_cols, data_path = "./images/train/images", label_path = "./images/train/label", test_path = "./images/test", npy_path = "./images/train/npydata", img_type = "tif"):
         # 数据处理类，初始化
 		self.out_rows = out_rows
 		self.out_cols = out_cols
@@ -155,8 +155,12 @@ class dataProcess(object):
 		imglabels = np.ndarray((len(imgs),self.out_rows,self.out_cols,1), dtype=np.uint8)
 		for imgname in imgs:
 			midname = imgname[imgname.rindex("/")+1:]
-			img = load_img(self.data_path + "/" + midname,grayscale = True)
-			label = load_img(self.label_path + "/" + midname,grayscale = True)
+			img = cv2.imread(self.data_path + "/" + midname)
+			label = cv2.imread(self.label_path + "/" + midname)
+			# img = load_img(self.data_path + "/" + midname,grayscale = True)
+			# label = load_img(self.label_path + "/" + midname,grayscale = True)
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			label = cv2.cvtColor(label, cv2.COLOR_BGR2GRAY)
 			img = img_to_array(img)
 			label = img_to_array(label)
 			#img = cv2.imread(self.data_path + "/" + midname,cv2.IMREAD_GRAYSCALE)
