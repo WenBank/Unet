@@ -3,6 +3,7 @@ import numpy as np
 import os
 import glob
 import cv2
+import re
 # from libtiff import TIFF
 
 class myAugmentation(object):
@@ -28,13 +29,13 @@ class myAugmentation(object):
 		self.aug_label_path = aug_label_path
 		self.slices = len(self.train_imgs)
 		self.datagen = ImageDataGenerator(
-							        rotation_range=0.2,
-							        width_shift_range=0.05,
-							        height_shift_range=0.05,
-							        shear_range=0.05,
-							        zoom_range=0.05,
-							        horizontal_flip=True,
-							        fill_mode='nearest')
+									rotation_range=0.2,
+									width_shift_range=0.05,
+									height_shift_range=0.05,
+									shear_range=0.05,
+									zoom_range=0.05,
+									horizontal_flip=True,
+									fill_mode='nearest')
 
 	def Augmentation(self):
 
@@ -67,23 +68,23 @@ class myAugmentation(object):
 			self.doAugmentate(img, savedir, str(i))
 
 	def doAugmentate(self, img, save_to_dir, save_prefix, batch_size=1, save_format='tif', imgnum=30):
-        # 增强一张图片的方法
+		# 增强一张图片的方法
 		"""
 		augmentate one image
 		"""
 		datagen = self.datagen
 		i = 0
 		for batch in datagen.flow(img,
-                          batch_size=batch_size,
-                          save_to_dir=save_to_dir,
-                          save_prefix=save_prefix,
-                          save_format=save_format):
-		    i += 1
-		    if i > imgnum:
-		        break
+						  batch_size=batch_size,
+						  save_to_dir=save_to_dir,
+						  save_prefix=save_prefix,
+						  save_format=save_format):
+			i += 1
+			if i > imgnum:
+				break
 
 	def splitMerge(self):
-        # 将合在一起的图片分开
+		# 将合在一起的图片分开
 		"""
 		split merged image apart
 		"""
@@ -110,7 +111,7 @@ class myAugmentation(object):
 				cv2.imwrite(path_label+"/"+str(i)+"/"+midname+"_label"+"."+self.img_type,img_label)
 
 	def splitTransform(self):
-        # 拆分透视变换后的图像
+		# 拆分透视变换后的图像
 		"""
 		split perspective transform images
 		"""
@@ -133,7 +134,7 @@ class myAugmentation(object):
 
 class dataProcess(object):
 	def __init__(self, out_rows, out_cols, data_path = "./images/train/images", label_path = "./images/train/label", test_path = "./images/test", npy_path = "./images/train/npydata", img_type = "tif"):
-        # 数据处理类，初始化
+		# 数据处理类，初始化
 		self.out_rows = out_rows
 		self.out_cols = out_cols
 		self.data_path = data_path
@@ -186,16 +187,23 @@ class dataProcess(object):
 		imgs = glob.glob(self.test_path+"/*."+self.img_type)
 		print(len(imgs))
 		imgdatas = np.ndarray((len(imgs),self.out_rows,self.out_cols,1), dtype=np.uint8)
+		imgnames = []
 		for imgname in imgs:
 			midname = imgname[imgname.rindex("/")+1:]
-			img = load_img(self.test_path + "/" + midname,grayscale = True)
+			# img = load_img(self.test_path + "/" + midname,grayscale = True)
+			img = cv2.imread(self.test_path + "/" + midname)
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			img = img_to_array(img)
 			#img = cv2.imread(self.test_path + "/" + midname,cv2.IMREAD_GRAYSCALE)
 			#img = np.array([img])
 			imgdatas[i] = img
+			imgnames.append(midname)
 			i += 1
 		print('loading done')
 		np.save(self.npy_path + '/imgs_test.npy', imgdatas)
+		y1 = np.array(imgnames)
+		y1 = y1.reshape(len(imgnames), 1)
+		np.save(self.npy_path + '/imgs_name.npy', y1)
 		print('Saving to imgs_test.npy files done.')
 
 # 加载训练图片与mask
@@ -211,7 +219,7 @@ class dataProcess(object):
 		mean = imgs_train.mean(axis = 0)
 		imgs_train -= mean
 		imgs_mask_train /= 255
-        # 做一个阈值处理，输出的概率值大于0.5的就认为是对象，否则认为是背景
+		# 做一个阈值处理，输出的概率值大于0.5的就认为是对象，否则认为是背景
 		imgs_mask_train[imgs_mask_train > 0.5] = 1
 		imgs_mask_train[imgs_mask_train <= 0.5] = 0
 		return imgs_train,imgs_mask_train
@@ -228,6 +236,9 @@ class dataProcess(object):
 		imgs_test -= mean
 		return imgs_test
 
+	def load_test_name(self):
+		imgs_test_name = np.load(self.npy_path+"/imgs_name.npy")
+		return imgs_test_name
 
 if __name__ == "__main__":
 # 以下注释掉的部分为数据增强代码，通过他们可以将数据进行增强
@@ -242,4 +253,5 @@ if __name__ == "__main__":
 	mydata.create_test_data()
 
 	imgs_train,imgs_mask_train = mydata.load_train_data()
+	imgs_test = mydata.load_test_data()
 	print (imgs_train.shape,imgs_mask_train.shape)
