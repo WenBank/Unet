@@ -38,7 +38,6 @@ class myAugmentation(object):
 									fill_mode='nearest')
 
 	def Augmentation(self):
-
 		"""
 		Start augmentation.....
 		"""
@@ -222,7 +221,7 @@ class dataProcess(object):
 		# 做一个阈值处理，输出的概率值大于0.5的就认为是对象，否则认为是背景
 		imgs_mask_train[imgs_mask_train > 0.5] = 1
 		imgs_mask_train[imgs_mask_train <= 0.5] = 0
-		return imgs_train,imgs_mask_train
+		return imgs_train,imgs_mask_train, mean
 
 # 加载测试图片
 	def load_test_data(self):
@@ -248,10 +247,11 @@ if __name__ == "__main__":
 	#aug.splitMerge()
 	#aug.splitTransform()
 
-	mydata = dataProcess(512,512)
+	mydata = dataProcess(512,512,data_path = "/media/we/work/TrainData/SpeechBalloon/aug_image", label_path = "/media/we/work/TrainData/SpeechBalloon/aug_label", \
+						 test_path = "/media/we/work/TrainData/SpeechBalloon/test", npy_path = "/media/we/work/TrainData/SpeechBalloon/npydata", img_type = "tif")
 	mydata.create_train_data()
 	mydata.create_test_data()
 
-	imgs_train,imgs_mask_train = mydata.load_train_data()
+	imgs_train,imgs_mask_train,mean = mydata.load_train_data()
 	imgs_test = mydata.load_test_data()
 	print (imgs_train.shape,imgs_mask_train.shape)
